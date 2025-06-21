@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Admin Dashboard - Currency Exchange API</title>
+   <meta name="description" content="Admin dashboard for managing currency exchange API. Monitor performance, view analytics, and manage system settings.">
+   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛠️</text></svg>">
+   <style>
+       * { margin: 0; padding: 0; box-sizing: border-box; }
+       body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #333; background: #f8fafc; }
+       .header { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 20px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+       .header-content { max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+       .logo { font-size: 1.5rem; font-weight: 800; text-decoration: none; color: white; display: flex; align-items: center; gap: 10px; }
+       .nav-links { display: flex; gap: 20px; }
+       .nav-links a { color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; transition: color 0.3s ease; }
+       .nav-links a:hover { color: white; }
+       .admin-badge { background: #ef4444; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-left: 12px; }
+       .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+       .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+       .page-title { font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+       .refresh-button { background: #10b981; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; }
+       .refresh-button:hover { background: #059669; transform: translateY(-2px); }
+       .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 30px; }
+       .stat-card { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; position: relative; overflow: hidden; }
+       .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--accent-color, #667eea); }
+       .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+       .stat-title { color: #64748b; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+       .stat-icon { font-size: 1.5rem; opacity: 0.7; }
+       .stat-value { font-size: 2.5rem; font-weight: 800; color: #1a202c; margin-bottom: 8px; }
+       .stat-change { font-size: 0.85rem; display: flex; align-items: center; gap: 4px; }
+       .change-positive { color: #10b981; }
+       .change-negative { color: #ef4444; }
+       .change-neutral { color: #64748b; }
+       .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px; }
+       .panel { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+       .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+       .panel-title { font-size: 1.5rem; font-weight: 700; color: #1a202c; }
+       .panel-subtitle { color: #64748b; font-size: 0.9rem; margin-top: 4px; }
+       .chart-container { height: 300px; background: #f8fafc; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #64748b; border: 2px dashed #e2e8f0; }
+       .activity-list { max-height: 400px; overflow-y: auto; }
+       .activity-item { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid #f1f5f9; }
+       .activity-item:last-child { border-bottom: none; }
+       .activity-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+       .activity-success { background: #ecfdf5; color: #059669; }
+       .activity-error { background: #fef2f2; color: #dc2626; }
+       .activity-warning { background: #fef3c7; color: #d97706; }
+       .activity-info { background: #eff6ff; color: #2563eb; }
+       .activity-content { flex: 1; }
+       .activity-title { font-weight: 600; color: #1a202c; margin-bottom: 4px; }
+       .activity-desc { color: #64748b; font-size: 0.85rem; }
+       .activity-time { color: #94a3b8; font-size: 0.8rem; white-space: nowrap; }
+       .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+       .setting-group { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+       .setting-title { font-size: 1.2rem; font-weight: 700; color: #1a202c; margin-bottom: 16px; }
+       .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+       .setting-item:last-child { border-bottom: none; }
+       .setting-label { color: #374151; font-weight: 500; }
+       .setting-value { color: #64748b; font-size: 0.9rem; }
+       .toggle-switch { position: relative; width: 50px; height: 24px; background: #cbd5e1; border-radius: 12px; cursor: pointer; transition: background 0.3s ease; }
+       .toggle-switch.active { background: #10b981; }
+       .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.3s ease; }
+       .toggle-switch.active::after { transform: translateX(26px); }
+       .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 14px; }
+       .btn-primary { background: #667eea; color: white; }
+       .btn-primary:hover { background: #5a67d8; transform: translateY(-2px); }
+       .btn-danger { background: #ef4444; color: white; }
+       .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
+       .btn-secondary { background: #f1f5f9; color: #64748b; }
+       .btn-secondary:hover { background: #e2e8f0; }
+       .btn-small { padding: 8px 16px; font-size: 12px; }
+       .table-container { overflow-x: auto; margin-top: 20px; }
+       .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+       .data-table th { background: #f8fafc; padding: 16px; text-align: left; font-weight: 600; color: #374151; border-bottom: 1px solid #e2e8f0; }
+       .data-table td { padding: 16px; border-bottom: 1px solid #f1f5f9; }
+       .data-table tr:hover { background: #f8fafc; }
+       .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+       .status-success { background: #ecfdf5; color: #059669; }
+       .status-error { background: #fef2f2; color: #dc2626; }
+       .status-warning { background: #fef3c7; color: #d97706; }
+       .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; backdrop-filter: blur(4px); }
+       .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 16px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+       .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+       .modal-title { font-size: 1.5rem; font-weight: 700; color: #1a202c; }
+       .close-button { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
+       .form-group { margin-bottom: 20px; }
+       .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; }
+       .form-input { width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; transition: border-color 0.3s ease; }
+       .form-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+       .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); display: none; align-items: center; justify-content: center; border-radius: 16px; }
+       .loading-spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+       .alert { padding: 16px 20px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+       .alert-success { background: #ecfdf5; color: #059669; border: 1px solid #bbf7d0; }
+       .alert-error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+       .alert-warning { background: #fef3c7; color: #d97706; border: 1px solid #fed7aa; }
+       @media (max-width: 1024px) { .main-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
+       @media (max-width: 768px) { .dashboard-header { flex-direction: column; gap: 16px; align-items: flex-start; } .nav-links { display: none; } .settings-grid { grid-template-columns: 1fr; } }
+   </style>
+</head>
+<body>
+   <header class="header">
+       <div class="header-content">
+           <a href="index.html" class="logo">🛠️ Currency API<span class="admin-badge">ADMIN</span></a>
+           <nav class="nav-links">
+               <a href="index.html">Home</a>
+               <a href="interface.html">Demo</a>
+               <a href="admin.html">Admin</a>
+               <a href="index.html#api">Docs</a>
+           </nav>
+       </div>
+   </header>
+
+   <div class="container">
+       <div class="dashboard-header">
+           <div>
+               <h1 class="page-title">Admin Dashboard</h1>
+               <p style="color: #64748b; margin-top: 8px;">Monitor and manage your currency exchange API</p>
+           </div>
+           <button class="refresh-button" onclick="refreshDashboard()">
+               <span id="refreshIcon">🔄</span>Refresh Data
+           </button>
+       </div>
+
+       <div class="stats-grid">
+           <div class="stat-card" style="--accent-color: #10b981;">
+               <div class="stat-header">
+                   <span class="stat-title">API Health</span>
+                   <span class="stat-icon">🟢</span>
+               </div>
+               <div class="stat-value" id="apiStatus">Healthy</div>
+               <div class="stat-change change-positive">
+                   <span>↗</span><span id="uptime">99.9% uptime</span>
+               </div>
+           </div>
+
+           <div class="stat-card" style="--accent-color: #667eea;">
+               <div class="stat-header">
+                   <span class="stat-title">Requests Today</span>
+                   <span class="stat-icon">📊</span>
+               </div>
+               <div class="stat-value" id="requestsToday">12,847</div>
+               <div class="stat-change change-positive">
+                   <span>↗</span><span>+23.5% from yesterday</span>
+               </div>
+           </div>
+
+           <div class="stat-card" style="--accent-color: #f59e0b;">
+               <div class="stat-header">
+                   <span class="stat-title">Avg Response Time</span>
+                   <span class="stat-icon">⚡</span>
+               </div>
+               <div class="stat-value" id="avgResponseTime">28ms</div>
+               <div class="stat-change change-positive">
+                   <span>↘</span><span>-12ms improvement</span>
+               </div>
+           </div>
+
+           <div class="stat-card" style="--accent-color: #ef4444;">
+               <div class="stat-header">
+                   <span class="stat-title">Error Rate</span>
+                   <span class="stat-icon">⚠️</span>
+               </div>
+               <div class="stat-value" id="errorRate">0.1%</div>
+               <div class="stat-change change-positive">
+                   <span>↘</span><span>-0.05% reduction</span>
+               </div>
+           </div>
+
+           <div class="stat-card" style="--accent-color: #8b5cf6;">
+               <div class="stat-header">
+                   <span class="stat-title">Active Currencies</span>
+                   <span class="stat-icon">💱</span>
+               </div>
+               <div class="stat-value" id="activeCurrencies">170</div>
+               <div class="stat-change change-neutral">
+                   <span>→</span><span>All systems operational</span>
+               </div>
+           </div>
+
+           <div class="stat-card" style="--accent-color: #06b6d4;">
+               <div class="stat-header">
+                   <span class="stat-title">Data Freshness</span>
+                   <span class="stat-icon">🔄</span>
+               </div>
+               <div class="stat-value" id="dataFreshness">1m</div>
+               <div class="stat-change change-positive">
+                   <span>✓</span><span id="lastUpdate">Updated 1 min ago</span>
+               </div>
+           </div>
+       </div>
+
+       <div class="main-grid">
+           <div class="panel">
+               <div class="panel-header">
+                   <div>
+                       <h2 class="panel-title">Performance Analytics</h2>
+                       <p class="panel-subtitle">API response times and request volume over the last 24 hours</p>
+                   </div>
+                   <button class="btn btn-secondary btn-small" onclick="exportAnalytics()">Export Data</button>
+               </div>
+               <div class="chart-container">
+                   <div style="text-align: center;">
+                       <div style="font-size: 3rem; margin-bottom: 16px;">📈</div>
+                       <h3 style="margin-bottom: 8px; color: #374151;">Performance Chart</h3>
+                       <p>Real-time analytics would be displayed here</p>
+                       <button class="btn btn-primary" style="margin-top: 16px;" onclick="loadChart()">Load Live Chart</button>
+                   </div>
+               </div>
+           </div>
+
+           <div class="panel">
+               <div class="panel-header">
+                   <div>
+                       <h2 class="panel-title">Recent Activity</h2>
+                       <p class="panel-subtitle">System events and API calls</p>
+                   </div>
+                   <button class="btn btn-secondary btn-small" onclick="refreshActivity()">Refresh</button>
+               </div>
+               <div class="activity-list" id="activityList">
+                   <div class="activity-item">
+                       <div class="activity-icon activity-success">✓</div>
+                       <div class="activity-content">
+                           <div class="activity-title">Data Refresh Completed</div>
+                           <div class="activity-desc">Successfully updated 170 currency rates</div>
+                       </div>
+                       <div class="activity-time">2 min ago</div>
+                   </div>
+                   
+                   <div class="activity-item">
+                       <div class="activity-icon activity-info">📊</div>
+                       <div class="activity-content">
+                           <div class="activity-title">High Traffic Alert</div>
+                           <div class="activity-desc">Request volume 150% above average</div>
+                       </div>
+                       <div class="activity-time">5 min ago</div>
+                   </div>
+                   
+                   <div class="activity-item">
+                       <div class="activity-icon activity-success">🔄</div>
+                       <div class="activity-content">
+                           <div class="activity-title">Bulk Conversion</div>
+                           <div class="activity-desc">Processed 50 currency pairs in 45ms</div>
+                       </div>
+                       <div class="activity-time">8 min ago</div>
+                   </div>
+                   
+                   <div class="activity-item">
+                       <div class="activity-icon activity-warning">⚠️</div>
+                       <div class="activity-content">
+                           <div class="activity-title">Slow Response Detected</div>
+                           <div class="activity-desc">EUR/USD conversion took 89ms</div>
+                       </div>
+                       <div class="activity-time">12 min ago</div>
+                   </div>
+                   
+                   <div class="activity-item">
+                       <div class="activity-icon activity-success">✅</div>
+                       <div class="activity-content">
+                           <div class="activity-title">System Health Check</div>
+                           <div class="activity-desc">All systems operational</div>
+                       </div>
+                       <div class="activity-time">15 min ago</div>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+       <div class="panel" style="margin-bottom: 30px;">
+           <div class="panel-header">
+               <div>
+                   <h2 class="panel-title">API Endpoints Status</h2>
+                   <p class="panel-subtitle">Real-time status of all API endpoints</p>
+               </div>
+               <button class="btn btn-primary btn-small" onclick="testAllEndpoints()">Test All</button>
+           </div>
+           
+           <div class="table-container">
+               <table class="data-table" id="endpointsTable">
+                   <thead>
+                       <tr>
+                           <th>Endpoint</th>
+                           <th>Status</th>
+                           <th>Response Time</th>
+                           <th>Success Rate</th>
+                           <th>Last Tested</th>
+                           <th>Actions</th>
+                       </tr>
+                   </thead>
+                   <tbody>
+                       <tr>
+                           <td><code>/api/convert</code></td>
+                           <td><span class="status-badge status-success">Healthy</span></td>
+                           <td>23ms</td>
+                           <td>99.8%</td>
+                           <td>30 sec ago</td>
+                           <td><button class="btn btn-secondary btn-small" onclick="testEndpoint('convert')">Test</button></td>
+                       </tr>
+                       <tr>
+                           <td><code>/api/rates</code></td>
+                           <td><span class="status-badge status-success">Healthy</span></td>
+                           <td>18ms</td>
+                           <td>99.9%</td>
+                           <td>30 sec ago</td>
+                           <td><button class="btn btn-secondary btn-small" onclick="testEndpoint('rates')">Test</button></td>
+                       </tr>
+                       <tr>
+                           <td><code>/api/currencies</code></td>
+                           <td><span class="status-badge status-success">Healthy</span></td>
+                           <td>15ms</td>
+                           <td>100%</td>
+                           <td>30 sec ago</td>
+                           <td><button class="btn btn-secondary btn-small" onclick="testEndpoint('currencies')">Test</button></td>
+                       </tr>
+                       <tr>
+                           <td><code>/api/bulk</code></td>
+                           <td><span class="status-badge status-success">Healthy</span></td>
+                           <td>45ms</td>
+                           <td>99.7%</td>
+                           <td>30 sec ago</td>
+                           <td><button class="btn btn-secondary btn-small" onclick="testEndpoint('bulk')">Test</button></td>
+                       </tr>
+                       <tr>
+                           <td><code>/api/health</code></td>
+                           <td><span class="status-badge status-success">Healthy</span></td>
+                           <td>12ms</td>
+                           <td>100%</td>
+                           <td>10 sec ago</td>
+                           <td><button class="btn btn-secondary btn-small" onclick="testEndpoint('health')">Test</button></td>
+                       </tr>
+                   </tbody>
+               </table>
+           </div>
+       </div>
+
+       <div class="panel">
+           <div class="panel-header">
+               <div>
+                   <h2 class="panel-title">System Configuration</h2>
+                   <p class="panel-subtitle">Manage API settings and preferences</p>
+               </div>
+               <button class="btn btn-primary btn-small" onclick="openSettingsModal()">Advanced Settings</button>
+           </div>
+           
+           <div class="settings-grid">
+               <div class="setting-group">
+                   <h3 class="setting-title">Data Management</h3>
+                   <div class="setting-item">
+                       <span class="setting-label">Auto Refresh</span>
+                       <div class="toggle-switch active" onclick="toggleSetting(this, 'autoRefresh')"></div>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">Refresh Interval</span>
+                       <span class="setting-value">60 seconds</span>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">Cache TTL</span>
+                       <span class="setting-value">300 seconds</span>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">Data Source</span>
+                       <span class="setting-value">ExchangeRate-API</span>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h3 class="setting-title">Performance</h3>
+                   <div class="setting-item">
+                       <span class="setting-label">Response Compression</span>
+                       <div class="toggle-switch active" onclick="toggleSetting(this, 'compression')"></div>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">Rate Limiting</span>
+                       <div class="toggle-switch" onclick="toggleSetting(this, 'rateLimiting')"></div>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">CDN Caching</span>
+                       <div class="toggle-switch active" onclick="toggleSetting(this, 'cdnCaching')"></div>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">Max Bulk Size</span>
+                       <span class="setting-value">200 conversions</span>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h3 class="setting-title">Monitoring</h3>
+                   <div class="setting-item">
+                       <span class="setting-label">Health Checks</span>
+                       <div class="toggle-switch active" onclick="toggleSetting(this, 'healthChecks')"></div>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">Error Tracking</span>
+                       <div class="toggle-switch active" onclick="toggleSetting(this, 'errorTracking')"></div>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">Analytics</span>
+                       <div class="toggle-switch active" onclick="toggleSetting(this, 'analytics')"></div>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">Alert Threshold</span>
+                       <span class="setting-value">100ms response</span>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h3 class="setting-title">Security</h3>
+                   <div class="setting-item">
+                       <span class="setting-label">CORS Protection</span>
+                       <div class="toggle-switch active" onclick="toggleSetting(this, 'cors')"></div>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">Request Validation</span>
+                       <div class="toggle-switch active" onclick="toggleSetting(this, 'validation')"></div>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">IP Whitelisting</span>
+                       <div class="toggle-switch" onclick="toggleSetting(this, 'ipWhitelist')"></div>
+                   </div>
+                   <div class="setting-item">
+                       <span class="setting-label">SSL Only</span>
+                       <div class="toggle-switch active" onclick="toggleSetting(this, 'sslOnly')"></div>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+       <div class="panel">
+           <div class="panel-header">
+               <h2 class="panel-title">Quick Actions</h2>
+               <p class="panel-subtitle">Common administrative tasks</p>
+           </div>
+           
+           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+               <button class="btn btn-primary" onclick="forceDataRefresh()">🔄 Force Data Refresh</button>
+               <button class="btn btn-secondary" onclick="clearCache()">🗑️ Clear Cache</button>
+               <button class="btn btn-secondary" onclick="downloadLogs()">📥 Download Logs</button>
+               <button class="btn btn-secondary" onclick="runHealthCheck()">🏥 Health Check</button>
+               <button class="btn btn-secondary" onclick="viewMetrics()">📊 View Metrics</button>
+               <button class="btn btn-danger" onclick="emergencyStop()">🚨 Emergency Stop</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="settingsModal" class="modal">
+       <div class="modal-content">
+           <div class="modal-header">
+               <h2 class="modal-title">Advanced Settings</h2>
+               <button class="close-button" onclick="closeModal()">&times;</button>
+           </div>
+           <form onsubmit="saveAdvancedSettings(event)">
+               <div class="form-group">
+                   <label class="form-label">Refresh Interval (seconds)</label>
+                   <input type="number" class="form-input" value="60" min="30" max="3600" id="refreshInterval">
+               </div>
+               <div class="form-group">
+                   <label class="form-label">Cache TTL (seconds)</label>
+                   <input type="number" class="form-input" value="300" min="60" max="1800" id="cacheTTL">
+               </div>
+               <div class="form-group">
+                   <label class="form-label">Alert Threshold (ms)</label>
+                   <input type="number" class="form-input" value="100" min="50" max="1000" id="alertThreshold">
+               </div>
+               <div class="form-group">
+                   <label class="form-label">Max Bulk Conversions</label>
+                   <input type="number" class="form-input" value="200" min="50" max="500" id="maxBulkSize">
+               </div>
+               <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+                   <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                   <button type="submit" class="btn btn-primary">Save Settings</button>
+               </div>
+           </form>
+       </div>
+   </div>
+
+   <script>
+       let refreshInterval;
+       let activityInterval;
+
+       function refreshDashboard() {
+           const refreshIcon = document.getElementById('refreshIcon');
+           refreshIcon.style.transform = 'rotate(360deg)';
+           refreshIcon.style.transition = 'transform 0.5s ease';
+           
+           // Simulate data refresh
+           setTimeout(() => {
+               updateStats();
+               refreshIcon.style.transform = 'rotate(0deg)';
+               showAlert('Dashboard refreshed successfully!', 'success');
+           }, 1000);
+       }
+
+       function updateStats() {
+           // Simulate dynamic stats updates
+           const stats = {
+               requestsToday: Math.floor(Math.random() * 5000) + 10000,
+               avgResponseTime: Math.floor(Math.random() * 20) + 20,
+               errorRate: (Math.random() * 0.5).toFixed(2),
+               uptime: (99.8 + Math.random() * 0.2).toFixed(1)
+           };
+
+           document.getElementById('requestsToday').textContent = stats.requestsToday.toLocaleString();
+           document.getElementById('avgResponseTime').textContent = `${stats.avgResponseTime}ms`;
+           document.getElementById('errorRate').textContent = `${stats.errorRate}%`;
+           document.getElementById('uptime').textContent = `${stats.uptime}% uptime`;
+           document.getElementById('lastUpdate').textContent = 'Updated just now';
+       }
+
+       function toggleSetting(element, settingName) {
+           element.classList.toggle('active');
+           const isActive = element.classList.contains('active');
+           console.log(`Setting ${settingName} ${isActive ? 'enabled' : 'disabled'}`);
+           showAlert(`${settingName} has been ${isActive ? 'enabled' : 'disabled'}`, 'success');
+       }
+
+       function testEndpoint(endpoint) {
+           const row = event.target.closest('tr');
+           const statusCell = row.cells[1];
+           const responseTimeCell = row.cells[2];
+           const lastTestedCell = row.cells[4];
+           
+           // Show loading state
+           statusCell.innerHTML = '<span class="status-badge status-warning">Testing...</span>';
+           
+           // Simulate API test
+           setTimeout(() => {
+               const isHealthy = Math.random() > 0.1; // 90% success rate
+               const responseTime = Math.floor(Math.random() * 50) + 15;
+               
+               if (isHealthy) {
+                   statusCell.innerHTML = '<span class="status-badge status-success">Healthy</span>';
+                   responseTimeCell.textContent = `${responseTime}ms`;
+               } else {
+                   statusCell.innerHTML = '<span class="status-badge status-error">Error</span>';
+                   responseTimeCell.textContent = 'Timeout';
+               }
+               
+               lastTestedCell.textContent = 'Just now';
+               showAlert(`Endpoint /api/${endpoint} tested successfully`, isHealthy ? 'success' : 'error');
+           }, 1500);
+       }
+
+       function testAllEndpoints() {
+           const endpointButtons = document.querySelectorAll('#endpointsTable button');
+           endpointButtons.forEach((button, index) => {
+               setTimeout(() => {
+                   button.click();
+               }, index * 300);
+           });
+       }
+
+       function refreshActivity() {
+           const activityList = document.getElementById('activityList');
+           
+           // Add new activity item
+           const newActivity = document.createElement('div');
+           newActivity.className = 'activity-item';
+           newActivity.innerHTML = `
+               <div class="activity-icon activity-info">🔄</div>
+               <div class="activity-content">
+                   <div class="activity-title">Manual Refresh Triggered</div>
+                   <div class="activity-desc">Admin dashboard data refreshed manually</div>
+               </div>
+               <div class="activity-time">Just now</div>
+           `;
+           
+           activityList.insertBefore(newActivity, activityList.firstChild);
+           
+           // Remove oldest activity if more than 10
+           if (activityList.children.length > 10) {
+               activityList.removeChild(activityList.lastChild);
+           }
+           
+           showAlert('Activity feed refreshed', 'success');
+       }
+
+       function openSettingsModal() {
+           document.getElementById('settingsModal').style.display = 'block';
+       }
+
+       function closeModal() {
+           document.getElementById('settingsModal').style.display = 'none';
+       }
+
+       function saveAdvancedSettings(event) {
+           event.preventDefault();
+           
+           const settings = {
+               refreshInterval: document.getElementById('refreshInterval').value,
+               cacheTTL: document.getElementById('cacheTTL').value,
+               alertThreshold: document.getElementById('alertThreshold').value,
+               maxBulkSize: document.getElementById('maxBulkSize').value
+           };
+           
+           console.log('Saving settings:', settings);
+           
+           // Simulate saving
+           setTimeout(() => {
+               closeModal();
+               showAlert('Advanced settings saved successfully!', 'success');
+           }, 500);
+       }
+
+       function forceDataRefresh() {
+           showAlert('Forcing data refresh from external API...', 'warning');
+           
+           setTimeout(() => {
+               showAlert('Data refresh completed! All currency rates updated.', 'success');
+               updateStats();
+           }, 2000);
+       }
+
+       function clearCache() {
+           showAlert('Clearing all cached data...', 'warning');
+           
+           setTimeout(() => {
+               showAlert('Cache cleared successfully!', 'success');
+           }, 1000);
+       }
+
+       function downloadLogs() {
+           showAlert('Preparing log file for download...', 'success');
+           
+           // Simulate log file creation
+           const logData = `
+API Logs - ${new Date().toISOString()}
+=====================================
+[INFO] System startup completed
+[INFO] Data refresh successful - 170 currencies loaded
+[INFO] Health check passed - all endpoints healthy
+[WARN] High traffic detected - 150% above average
+[INFO] Cache cleared by admin
+[INFO] Settings updated by admin
+           `.trim();
+           
+           const blob = new Blob([logData], { type: 'text/plain' });
+           const url = window.URL.createObjectURL(blob);
+           const a = document.createElement('a');
+           a.href = url;
+           a.download = `api-logs-${new Date().toISOString().split('T')[0]}.txt`;
+           document.body.appendChild(a);
+           a.click();
+           document.body.removeChild(a);
+           window.URL.revokeObjectURL(url);
+       }
+
+       function runHealthCheck() {
+           showAlert('Running comprehensive health check...', 'warning');
+           
+           setTimeout(() => {
+               showAlert('Health check completed! All systems operational.', 'success');
+               
+               // Update all endpoint statuses
+               document.querySelectorAll('#endpointsTable .status-badge').forEach(badge => {
+                   badge.className = 'status-badge status-success';
+                   badge.textContent = 'Healthy';
+               });
+           }, 3000);
+       }
+
+       function viewMetrics() {
+           showAlert('Redirecting to detailed metrics dashboard...', 'success');
+       }
+
+       function emergencyStop() {
+           if (confirm('Are you sure you want to initiate emergency stop? This will temporarily disable the API.')) {
+               showAlert('Emergency stop initiated! API temporarily disabled.', 'error');
+               
+               // Update all statuses to error
+               setTimeout(() => {
+                   document.querySelectorAll('#endpointsTable .status-badge').forEach(badge => {
+                       badge.className = 'status-badge status-error';
+                       badge.textContent = 'Stopped';
+                   });
+                   
+                   document.getElementById('apiStatus').textContent = 'Emergency Stop';
+                   document.querySelector('.stat-card .stat-change').innerHTML = '<span>🚨</span><span>System halted</span>';
+               }, 1000);
+           }
+       }
+
+       function exportAnalytics() {
+           showAlert('Exporting analytics data...', 'success');
+           
+           const analyticsData = {
+               timestamp: new Date().toISOString(),
+               requests_today: 12847,
+               avg_response_time: '28ms',
+               error_rate: '0.1%',
+               uptime: '99.9%',
+               endpoints_status: {
+                   convert: 'healthy',
+                   rates: 'healthy',
+                   currencies: 'healthy',
+                   bulk: 'healthy',
+                   health: 'healthy'
+               }
+           };
+           
+           const blob = new Blob([JSON.stringify(analyticsData, null, 2)], { type: 'application/json' });
+           const url = window.URL.createObjectURL(blob);
+           const a = document.createElement('a');
+           a.href = url;
+           a.download = `analytics-${new Date().toISOString().split('T')[0]}.json`;
+           document.body.appendChild(a);
+           a.click();
+           document.body.removeChild(a);
+           window.URL.revokeObjectURL(url);
+       }
+
+       function loadChart() {
+           const chartContainer = document.querySelector('.chart-container');
+           chartContainer.innerHTML = `
+               <div style="width: 100%; height: 100%; background: linear-gradient(45deg, #667eea, #764ba2); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;">
+                   <div style="text-align: center;">
+                       <div style="font-size: 2rem; margin-bottom: 16px;">📈</div>
+                       <h3>Live Performance Chart</h3>
+                       <p style="margin-top: 8px; opacity: 0.9;">Chart integration would display real-time metrics here</p>
+                       <div style="margin-top: 20px; display: flex; gap: 20px; justify-content: center;">
+                           <div style="text-align: center;">
+                               <div style="font-size: 1.5rem; font-weight: bold;">28ms</div>
+                               <div style="font-size: 0.8rem; opacity: 0.8;">Avg Response</div>
+                           </div>
+                           <div style="text-align: center;">
+                               <div style="font-size: 1.5rem; font-weight: bold;">12.8k</div>
+                               <div style="font-size: 0.8rem; opacity: 0.8;">Requests</div>
+                           </div>
+                           <div style="text-align: center;">
+                               <div style="font-size: 1.5rem; font-weight: bold;">99.9%</div>
+                               <div style="font-size: 0.8rem; opacity: 0.8;">Uptime</div>
+                           </div>
+                       </div>
+                   </div>
+               </div>
+           `;
+       }
+
+       function showAlert(message, type = 'success') {
+           const alertClass = `alert-${type}`;
+           const alertIcon = type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️';
+           
+           const alert = document.createElement('div');
+           alert.className = `alert ${alertClass}`;
+           alert.innerHTML = `<span>${alertIcon}</span><span>${message}</span>`;
+           
+           document.body.appendChild(alert);
+           alert.style.position = 'fixed';
+           alert.style.top = '20px';
+           alert.style.right = '20px';
+           alert.style.zIndex = '9999';
+           alert.style.maxWidth = '400px';
+           
+           setTimeout(() => {
+               alert.style.opacity = '0';
+               setTimeout(() => {
+                   if (alert.parentNode) {
+                       alert.parentNode.removeChild(alert);
+                   }
+               }, 300);
+           }, 3000);
+       }
+
+       // Initialize dashboard
+       document.addEventListener('DOMContentLoaded', function() {
+           // Auto-refresh stats every 30 seconds
+           refreshInterval = setInterval(updateStats, 30000);
+           
+           // Auto-refresh activity every 2 minutes
+           activityInterval = setInterval(refreshActivity, 120000);
+           
+           // Close modal when clicking outside
+           window.onclick = function(event) {
+               const modal = document.getElementById('settingsModal');
+               if (event.target === modal) {
+                   closeModal();
+               }
+           };
+           
+           showAlert('Admin dashboard loaded successfully!', 'success');
+       });
+
+       // Cleanup intervals when page unloads
+       window.addEventListener('beforeunload', function() {
+           if (refreshInterval) clearInterval(refreshInterval);
+           if (activityInterval) clearInterval(activityInterval);
+       });
+   </script>
+</body>
+</html>
