@@ -1,0 +1,40 @@
+{
+  "name": "currency-exchange-api",
+  "version": "2.0.0",
+  "description": "Fast currency exchange API with local storage and auto-refresh",
+  "main": "api/convert.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'",
+    "start": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "currency",
+    "exchange",
+    "api",
+    "conversion",
+    "rates",
+    "forex",
+    "money",
+    "international",
+    "finance",
+    "vercel",
+    "serverless"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/my-currency-api"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/my-currency-api/issues"
+  },
+  "homepage": "https://my-currency-api.vercel.app"
+}
